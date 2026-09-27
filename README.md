@@ -1,6 +1,6 @@
 # 智能工单助手客户前端
 
-`helpdesk-agent-web` 是 `helpdesk-agent` 的独立客户前端。当前版本提供客户注册、登录、对话管理、历史消息查看和 AI 流式问答，为后续知识库问答、人工客服转接与工单跟踪提供界面基础。
+`helpdesk-agent-web` 是 `helpdesk-agent` 的独立客户前端。当前版本提供客户注册、登录、对话管理、历史消息查看、AI 流式问答，以及 AI 工单草稿的修改、确认和取消。
 
 ## 技术栈
 
@@ -40,6 +40,24 @@ npm run preview     # 本地预览生产构建
 - `src/utils/`：本地认证存储和日期格式化工具。
 - `notes/`：每轮功能变更的中文说明。
 
+## AI 工单确认卡片
+
+AI 判断问题需要人工处理时，聊天流会返回 `action_required` 事件。前端把草稿展示在对应 AI 消息下方，客户可以：
+
+- 查看 AI 整理的标题、描述、优先级和判断理由；
+- 修改标题和问题描述；
+- 确认后创建真实工单，或取消本次草稿；
+- 在刷新或切换对话后恢复已确认、已取消、已过期和已失效状态。
+
+前端使用以下后端接口：
+
+```http
+GET   /api/agent/actions?conversationId={id}
+PATCH /api/agent/actions/{id}
+POST  /api/agent/actions/{id}/confirm
+POST  /api/agent/actions/{id}/cancel
+```
+
 ## 当前范围
 
-第一阶段只实现客户对话主链路。工单创建、工单进度、人工客服转接、模型配置与管理端页面暂未包含。登录令牌目前存放在 `localStorage`，适合本地学习与演示；正式部署前应结合后端改为更安全的 HttpOnly Cookie 方案。
+当前已经实现客户对话和 AI 工单确认主链路。完整工单列表、跨部门处理、人工客服转接、模型配置与管理端页面暂未包含。登录令牌目前存放在 `localStorage`，适合本地学习与演示；正式部署前应结合后端改为更安全的 HttpOnly Cookie 方案。

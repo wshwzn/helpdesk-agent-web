@@ -5,19 +5,27 @@ import { ElButton, ElMessage, ElMessageBox } from 'element-plus'
 
 import { createConversation, listConversations, listMessages } from '@/api/conversation'
 import { normalizeApiError } from '@/api/http'
+import {
+  cancelPendingAction,
+  confirmPendingAction,
+  listPendingActions,
+  updatePendingAction,
+} from '@/api/pending-action'
 import { streamConversationMessage } from '@/api/sse'
 import BrandMark from '@/components/BrandMark.vue'
 import ChatComposer from '@/components/chat/ChatComposer.vue'
 import ChatMessageList from '@/components/chat/ChatMessageList.vue'
 import ConversationSidebar from '@/components/chat/ConversationSidebar.vue'
 import { useAuthStore } from '@/stores/auth'
-import type { ChatMessage, ChatStreamEvent, Conversation } from '@/types/conversation'
+import type { ChatMessage, ChatStreamEvent, Conversation, PendingAction } from '@/types/conversation'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const conversations = ref<Conversation[]>([])
 const selectedConversation = ref<Conversation | null>(null)
 const messages = ref<ChatMessage[]>([])
+const pendingActions = ref<PendingAction[]>([])
+const busyActionIds = ref<number[]>([])
 const loadingConversations = ref(false)
 const loadingMessages = ref(false)
 const streaming = ref(false)
@@ -54,10 +62,18 @@ async function selectConversation(conversation: Conversation): Promise<void> {
     return
   }
   selectedConversation.value = conversation
+  messages.value = []
+  pendingActions.value = []
   loadingMessages.value = true
   try {
-    const page = await listMessages(conversation.id)
-    messages.value = page.records
+    const [messagePage, actions] = await Promise.all([
+      listMessages(conversation.id),
+      listPendingActions(conversation.id),
+    ])
+    if (selectedConversationId.value === conversation.id) {
+      messages.value = messagePage.records
+      pendingActions.value = actions
+    }
   } catch (error) {
     ElMessage.error(normalizeApiError(error).message)
   } finally {
@@ -109,6 +125,7 @@ async function sendMessage(content: string): Promise<void> {
       {
         onStart: handleStreamStart,
         onDelta: handleStreamDelta,
+        onActionRequired: handleActionRequired,
         onDone: handleStreamDone,
         onError: handleStreamError,
       },
@@ -162,6 +179,15 @@ function handleStreamDelta(event: ChatStreamEvent): void {
 }
 
 /**
+ * 接收 action_required 事件，并把工单草稿挂到对应的 AI 消息下方。
+ */
+function handleActionRequired(event: ChatStreamEvent): void {
+  if (event.pendingAction) {
+    upsertPendingAction(event.pendingAction)
+  }
+}
+
+/**
  * 接收 done 事件，用数据库中的最终消息替换页面占位消息。
  */
 function handleStreamDone(event: ChatStreamEvent): void {
@@ -199,6 +225,106 @@ function markPendingMessageFailed(errorCode: string): void {
   if (pendingMessage) {
     pendingMessage.status = 'FAILED'
     pendingMessage.errorCode = errorCode
+  }
+}
+
+/**
+ * 保存客户修改后的工单标题和描述，并使用服务端新版本替换卡片。
+ */
+async function savePendingAction(
+  actionId: number,
+  title: string,
+  description: string,
+  version: number,
+): Promise<void> {
+  setActionBusy(actionId, true)
+  try {
+    const action = await updatePendingAction(actionId, { title, description, version })
+    upsertPendingAction(action)
+    ElMessage.success('工单草稿已保存')
+  } catch (error) {
+    await handleActionFailure(error)
+  } finally {
+    setActionBusy(actionId, false)
+  }
+}
+
+/**
+ * 确认当前草稿并展示后端创建成功的真实工单编号。
+ */
+async function confirmAction(actionId: number, version: number): Promise<void> {
+  setActionBusy(actionId, true)
+  try {
+    const result = await confirmPendingAction(actionId, version)
+    upsertPendingAction(result.action)
+    ElMessage.success(`工单 ${result.ticket.ticketNo} 创建成功`)
+  } catch (error) {
+    await handleActionFailure(error)
+  } finally {
+    setActionBusy(actionId, false)
+  }
+}
+
+/**
+ * 取消不再需要提交的工单草稿，并同步卡片最终状态。
+ */
+async function cancelAction(actionId: number, version: number): Promise<void> {
+  setActionBusy(actionId, true)
+  try {
+    const action = await cancelPendingAction(actionId, version)
+    upsertPendingAction(action)
+    ElMessage.success('工单草稿已取消')
+  } catch (error) {
+    await handleActionFailure(error)
+  } finally {
+    setActionBusy(actionId, false)
+  }
+}
+
+/**
+ * 插入或替换当前对话中的确认操作，忽略已经切换离开的对话响应。
+ */
+function upsertPendingAction(action: PendingAction): void {
+  if (action.conversationId !== selectedConversationId.value) {
+    return
+  }
+  const index = pendingActions.value.findIndex((item) => item.id === action.id)
+  if (index >= 0) {
+    pendingActions.value[index] = action
+  } else {
+    pendingActions.value.push(action)
+  }
+}
+
+/**
+ * 更新卡片的请求中状态，避免客户重复点击产生并发操作。
+ */
+function setActionBusy(actionId: number, busy: boolean): void {
+  const ids = new Set(busyActionIds.value)
+  if (busy) {
+    ids.add(actionId)
+  } else {
+    ids.delete(actionId)
+  }
+  busyActionIds.value = [...ids]
+}
+
+/**
+ * 显示操作失败原因并重新加载当前对话卡片，恢复最新版本与状态。
+ */
+async function handleActionFailure(error: unknown): Promise<void> {
+  ElMessage.error(normalizeApiError(error).message)
+  const conversationId = selectedConversationId.value
+  if (!conversationId) {
+    return
+  }
+  try {
+    const actions = await listPendingActions(conversationId)
+    if (selectedConversationId.value === conversationId) {
+      pendingActions.value = actions
+    }
+  } catch (refreshError) {
+    ElMessage.error(normalizeApiError(refreshError).message)
   }
 }
 
@@ -254,7 +380,15 @@ onBeforeUnmount(() => streamController.value?.abort())
             </div>
             <span class="online-status"><i></i> AI 服务在线</span>
           </div>
-          <ChatMessageList :messages="messages" :loading="loadingMessages" />
+          <ChatMessageList
+            :messages="messages"
+            :pending-actions="pendingActions"
+            :busy-action-ids="busyActionIds"
+            :loading="loadingMessages"
+            @update-action="savePendingAction"
+            @confirm-action="confirmAction"
+            @cancel-action="cancelAction"
+          />
           <div class="composer-area">
             <ChatComposer
               :disabled="loadingMessages || streaming"

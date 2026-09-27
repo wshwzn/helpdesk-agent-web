@@ -47,9 +47,10 @@ describe('SSE 事件解析', () => {
   it('应按顺序分发被网络分片拆开的聊天事件', async () => {
     writeAuthSession(testSession)
     const body = [
-      'event: start\ndata: {"type":"start","userMessage":null,"assistantMessageId":2,"content":null,"assistantMessage":null,"errorCode":null,"message":null}\n\n',
-      'event: delta\ndata: {"type":"delta","userMessage":null,"assistantMessageId":null,"content":"你好","assistantMessage":null,"errorCode":null,"message":null}\n\n',
-      'event: done\ndata: {"type":"done","userMessage":null,"assistantMessageId":null,"content":null,"assistantMessage":null,"errorCode":null,"message":null}\n\n',
+      'event: start\ndata: {"type":"start","userMessage":null,"assistantMessageId":2,"content":null,"pendingAction":null,"assistantMessage":null,"errorCode":null,"message":null}\n\n',
+      'event: delta\ndata: {"type":"delta","userMessage":null,"assistantMessageId":null,"content":"你好","pendingAction":null,"assistantMessage":null,"errorCode":null,"message":null}\n\n',
+      'event: action_required\ndata: {"type":"action_required","userMessage":null,"assistantMessageId":null,"content":null,"pendingAction":{"id":8},"assistantMessage":null,"errorCode":null,"message":null}\n\n',
+      'event: done\ndata: {"type":"done","userMessage":null,"assistantMessageId":null,"content":null,"pendingAction":null,"assistantMessage":null,"errorCode":null,"message":null}\n\n',
     ].join('')
     const encoded = new TextEncoder().encode(body)
     const responseStream = new ReadableStream<Uint8Array>({
@@ -66,11 +67,12 @@ describe('SSE 事件解析', () => {
     await streamConversationMessage(1, '你好', {
       onStart: () => order.push('start'),
       onDelta: () => order.push('delta'),
+      onActionRequired: () => order.push('action_required'),
       onDone: () => order.push('done'),
       onError: () => order.push('error'),
     })
 
-    expect(order).toEqual(['start', 'delta', 'done'])
+    expect(order).toEqual(['start', 'delta', 'action_required', 'done'])
     expect(fetch).toHaveBeenCalledWith(
       '/api/conversations/1/messages/stream',
       expect.objectContaining({ method: 'POST' }),
@@ -94,6 +96,7 @@ describe('SSE 事件解析', () => {
     const promise = streamConversationMessage(1, '你好', {
       onStart: vi.fn(),
       onDelta: vi.fn(),
+      onActionRequired: vi.fn(),
       onDone: vi.fn(),
       onError: vi.fn(),
     })
@@ -105,7 +108,7 @@ describe('SSE 事件解析', () => {
 
   it('最后一个事件没有空行结尾时仍应正常结束', async () => {
     writeAuthSession(testSession)
-    const body = 'event: done\ndata: {"type":"done","userMessage":null,"assistantMessageId":null,"content":null,"assistantMessage":null,"errorCode":null,"message":null}'
+    const body = 'event: done\ndata: {"type":"done","userMessage":null,"assistantMessageId":null,"content":null,"pendingAction":null,"assistantMessage":null,"errorCode":null,"message":null}'
     const responseStream = new ReadableStream<Uint8Array>({
       start(controller) {
         controller.enqueue(new TextEncoder().encode(body))
@@ -118,6 +121,7 @@ describe('SSE 事件解析', () => {
     await streamConversationMessage(1, '你好', {
       onStart: vi.fn(),
       onDelta: vi.fn(),
+      onActionRequired: vi.fn(),
       onDone,
       onError: vi.fn(),
     })

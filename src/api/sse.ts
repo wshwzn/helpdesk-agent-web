@@ -11,6 +11,7 @@ export interface ParsedSseEvent {
 export interface ChatStreamHandlers {
   onStart: (event: ChatStreamEvent) => void
   onDelta: (event: ChatStreamEvent) => void
+  onActionRequired: (event: ChatStreamEvent) => void
   onDone: (event: ChatStreamEvent) => void
   onError: (event: ChatStreamEvent) => void
 }
@@ -122,6 +123,10 @@ function dispatchChatEvent(
   }
   if (eventName === 'delta') {
     handlers.onDelta(event)
+    return false
+  }
+  if (eventName === 'action_required') {
+    handlers.onActionRequired(event)
     return false
   }
   if (eventName === 'done') {
