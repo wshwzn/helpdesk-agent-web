@@ -2,6 +2,7 @@
 import { nextTick, ref, watch } from 'vue'
 import { vLoading } from 'element-plus'
 
+import MarkdownContent from '@/components/chat/MarkdownContent.vue'
 import PendingActionCard from '@/components/chat/PendingActionCard.vue'
 import type { ChatMessage, PendingAction } from '@/types/conversation'
 
@@ -92,7 +93,11 @@ watch(
       <article class="message-row" :class="`message-row--${message.role.toLowerCase()}`">
         <div v-if="message.role === 'ASSISTANT'" class="message-avatar message-avatar--assistant">AI</div>
         <div class="message-bubble" :class="{ 'message-bubble--failed': message.status === 'FAILED' }">
-          <p v-if="message.content" class="message-content">{{ message.content }}</p>
+          <MarkdownContent
+            v-if="message.content && message.role === 'ASSISTANT'"
+            :content="message.content"
+          />
+          <p v-else-if="message.content" class="message-content">{{ message.content }}</p>
           <p v-else-if="message.status === 'PENDING'" class="message-pending">
             <span></span><span></span><span></span>
           </p>

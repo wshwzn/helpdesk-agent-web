@@ -532,6 +532,7 @@ a {
 }
 
 .message-bubble {
+  min-width: 0;
   max-width: min(74%, 680px);
   padding: 14px 17px;
   color: #343b4c;
@@ -559,6 +560,120 @@ a {
   line-height: 1.75;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.message-markdown {
+  white-space: normal;
+}
+
+.message-markdown > :first-child {
+  margin-top: 0;
+}
+
+.message-markdown > :last-child {
+  margin-bottom: 0;
+}
+
+.message-markdown p,
+.message-markdown ul,
+.message-markdown ol,
+.message-markdown blockquote,
+.message-markdown pre,
+.message-markdown table {
+  margin: 0 0 12px;
+}
+
+.message-markdown h1,
+.message-markdown h2,
+.message-markdown h3,
+.message-markdown h4 {
+  margin: 18px 0 9px;
+  color: #252b3b;
+  line-height: 1.35;
+}
+
+.message-markdown h1 {
+  font-size: 20px;
+}
+
+.message-markdown h2 {
+  font-size: 18px;
+}
+
+.message-markdown h3,
+.message-markdown h4 {
+  font-size: 16px;
+}
+
+.message-markdown ul,
+.message-markdown ol {
+  padding-left: 24px;
+}
+
+.message-markdown li + li {
+  margin-top: 4px;
+}
+
+.message-markdown blockquote {
+  padding: 3px 0 3px 12px;
+  color: #666d7e;
+  border-left: 3px solid #cfd2ee;
+}
+
+.message-markdown code {
+  padding: 2px 5px;
+  color: #bb4966;
+  background: #e9eaf1;
+  border-radius: 5px;
+  font-family: "Cascadia Code", Consolas, monospace;
+  font-size: 0.88em;
+}
+
+.message-markdown pre {
+  max-width: 100%;
+  padding: 13px 15px;
+  overflow-x: auto;
+  color: #e8eaf3;
+  background: #292d3e;
+  border-radius: 10px;
+}
+
+.message-markdown pre code {
+  padding: 0;
+  color: inherit;
+  background: transparent;
+  white-space: pre;
+}
+
+.message-markdown table {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+}
+
+.message-markdown th,
+.message-markdown td {
+  padding: 7px 10px;
+  border: 1px solid #dfe1ea;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.message-markdown th {
+  background: #e9eaf1;
+}
+
+.message-markdown a {
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.message-markdown hr {
+  margin: 15px 0;
+  border: 0;
+  border-top: 1px solid #dfe1ea;
 }
 
 .message-meta {
