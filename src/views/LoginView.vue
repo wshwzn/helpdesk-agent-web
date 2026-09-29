@@ -21,7 +21,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
-const form = reactive<LoginRequest>({ username: '', password: '' })
+const form = reactive<LoginRequest>({ username: 'user', password: 'user123' })
 const rules: FormRules<LoginRequest> = {
   username: [{ required: true, message: '请输入登录名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入登录密码', trigger: 'blur' }],
