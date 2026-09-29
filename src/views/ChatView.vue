@@ -163,6 +163,7 @@ function handleStreamStart(event: ChatStreamEvent): void {
     completionTokens: null,
     totalTokens: null,
     errorCode: null,
+    citations: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   })

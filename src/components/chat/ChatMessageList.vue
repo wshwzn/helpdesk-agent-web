@@ -3,6 +3,7 @@ import { nextTick, ref, watch } from 'vue'
 import { vLoading } from 'element-plus'
 
 import MarkdownContent from '@/components/chat/MarkdownContent.vue'
+import KnowledgeSources from '@/components/chat/KnowledgeSources.vue'
 import PendingActionCard from '@/components/chat/PendingActionCard.vue'
 import type { ChatMessage, PendingAction } from '@/types/conversation'
 
@@ -73,7 +74,9 @@ function forwardActionCancellation(actionId: number, version: number): void {
 
 watch(
   () => [
-    props.messages.map((message) => `${message.id}:${message.content}`).join('|'),
+    props.messages
+      .map((message) => `${message.id}:${message.content}:${message.citations?.length ?? 0}`)
+      .join('|'),
     props.pendingActions.map((action) => `${action.id}:${action.status}:${action.version}`).join('|'),
   ],
   scrollToLatestMessage,
@@ -102,6 +105,10 @@ watch(
             <span></span><span></span><span></span>
           </p>
           <p v-else class="message-error">回答生成失败，请稍后重试</p>
+          <KnowledgeSources
+            v-if="message.role === 'ASSISTANT' && message.citations?.length"
+            :citations="message.citations"
+          />
           <small v-if="message.role === 'ASSISTANT' && message.modelName" class="message-meta">
             {{ message.modelName }}
             <template v-if="message.totalTokens"> · {{ message.totalTokens }} tokens</template>

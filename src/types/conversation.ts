@@ -14,6 +14,13 @@ export interface Conversation {
   updatedAt: string
 }
 
+export interface KnowledgeCitation {
+  knowledgeBaseName: string
+  sourceName: string
+  chunkSequence: number
+  content: string
+}
+
 export interface ChatMessage {
   id: number
   conversationId: number
@@ -26,6 +33,7 @@ export interface ChatMessage {
   completionTokens: number | null
   totalTokens: number | null
   errorCode: string | null
+  citations: KnowledgeCitation[]
   createdAt: string
   updatedAt: string
 }
