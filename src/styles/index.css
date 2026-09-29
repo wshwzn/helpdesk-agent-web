@@ -717,7 +717,6 @@ a {
   border-top: 1px solid #e0e2ea;
 }
 
-.knowledge-sources__header,
 .knowledge-source__meta {
   display: flex;
   align-items: center;
@@ -725,17 +724,49 @@ a {
 }
 
 .knowledge-sources__header {
-  margin-bottom: 8px;
-  color: #555e72;
+  margin: 0;
 }
 
-.knowledge-sources__header strong {
+.knowledge-sources__trigger {
+  display: flex;
+  width: 100%;
+  padding: 2px 0;
+  color: #555e72;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.knowledge-sources__summary {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.knowledge-sources__summary strong {
   font-size: 11px;
 }
 
-.knowledge-sources__header span {
+.knowledge-sources__summary small {
   color: #969dac;
   font-size: 9px;
+}
+
+.knowledge-sources__arrow {
+  color: #8d94a4;
+  font-size: 17px;
+  line-height: 1;
+  transition: transform 160ms ease;
+}
+
+.knowledge-sources__arrow--expanded {
+  transform: rotate(180deg);
+}
+
+.knowledge-sources__list {
+  margin-top: 9px;
 }
 
 .knowledge-source {
