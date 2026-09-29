@@ -1,4 +1,4 @@
-import { requestData } from '@/api/http'
+import { requestData, requestVoid } from '@/api/http'
 import type { PageResponse } from '@/types/api'
 import type { ChatMessage, Conversation } from '@/types/conversation'
 
@@ -21,6 +21,16 @@ export function createConversation(title: string): Promise<Conversation> {
     method: 'POST',
     url: '/conversations',
     data: { title },
+  })
+}
+
+/**
+ * 删除当前客户自己的对话；后端会归档并保留历史审计数据。
+ */
+export function deleteConversation(conversationId: number): Promise<void> {
+  return requestVoid({
+    method: 'DELETE',
+    url: `/conversations/${conversationId}`,
   })
 }
 

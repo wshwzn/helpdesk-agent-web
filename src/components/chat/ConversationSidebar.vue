@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ElButton, vLoading } from 'element-plus'
+import { Delete } from '@element-plus/icons-vue'
 
 import type { Conversation } from '@/types/conversation'
 import { formatDateTime } from '@/utils/date'
@@ -9,11 +10,13 @@ defineProps<{
   selectedId: number | null
   loading: boolean
   disabled: boolean
+  deletingId: number | null
 }>()
 
 const emit = defineEmits<{
   select: [conversation: Conversation]
   create: []
+  delete: [conversation: Conversation]
 }>()
 </script>
 
@@ -30,21 +33,36 @@ const emit = defineEmits<{
     </div>
 
     <div v-loading="loading" class="conversation-list">
-      <button
+      <div
         v-for="conversation in conversations"
         :key="conversation.id"
         class="conversation-item"
         :class="{ 'conversation-item--active': conversation.id === selectedId }"
-        :disabled="disabled && conversation.id !== selectedId"
-        type="button"
-        @click="emit('select', conversation)"
       >
-        <span class="conversation-item__icon">✦</span>
-        <span class="conversation-item__content">
-          <strong>{{ conversation.title }}</strong>
-          <small>{{ formatDateTime(conversation.lastMessageAt || conversation.updatedAt) }}</small>
-        </span>
-      </button>
+        <button
+          class="conversation-item__select"
+          :disabled="disabled"
+          type="button"
+          @click="emit('select', conversation)"
+        >
+          <span class="conversation-item__icon">✦</span>
+          <span class="conversation-item__content">
+            <strong>{{ conversation.title }}</strong>
+            <small>{{ formatDateTime(conversation.lastMessageAt || conversation.updatedAt) }}</small>
+          </span>
+        </button>
+        <el-button
+          class="conversation-item__delete"
+          text
+          circle
+          type="danger"
+          :icon="Delete"
+          :loading="deletingId === conversation.id"
+          :disabled="disabled"
+          :aria-label="`删除对话：${conversation.title}`"
+          @click.stop="emit('delete', conversation)"
+        />
+      </div>
 
       <div v-if="!loading && conversations.length === 0" class="conversation-empty">
         <span>还没有对话</span>

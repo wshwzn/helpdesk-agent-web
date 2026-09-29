@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElButton, ElMessage, ElMessageBox } from 'element-plus'
 
-import { createConversation, listConversations, listMessages } from '@/api/conversation'
+import { createConversation, deleteConversation, listConversations, listMessages } from '@/api/conversation'
 import { normalizeApiError } from '@/api/http'
 import {
   cancelPendingAction,
@@ -29,8 +29,10 @@ const busyActionIds = ref<number[]>([])
 const loadingConversations = ref(false)
 const loadingMessages = ref(false)
 const streaming = ref(false)
+const deletingConversationId = ref<number | null>(null)
 const streamController = ref<AbortController | null>(null)
 const selectedConversationId = computed(() => selectedConversation.value?.id ?? null)
+const conversationOperationBusy = computed(() => streaming.value || deletingConversationId.value !== null)
 
 /**
  * 加载最近对话，并在首次进入时自动打开第一条记录。
@@ -85,7 +87,7 @@ async function selectConversation(conversation: Conversation): Promise<void> {
  * 询问新对话标题，创建成功后立即切换到该对话。
  */
 async function createNewConversation(): Promise<void> {
-  if (streaming.value) {
+  if (conversationOperationBusy.value) {
     return
   }
   try {
@@ -107,11 +109,47 @@ async function createNewConversation(): Promise<void> {
 }
 
 /**
+ * 二次确认后删除所选对话；删除当前项时自动切换到相邻对话或空状态。
+ */
+async function removeConversation(conversation: Conversation): Promise<void> {
+  if (conversationOperationBusy.value) {
+    return
+  }
+  try {
+    await ElMessageBox.confirm(
+      `确定删除“${conversation.title}”吗？删除后将从对话列表中移除。`,
+      '删除对话',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' },
+    )
+    deletingConversationId.value = conversation.id
+    const removedIndex = conversations.value.findIndex((item) => item.id === conversation.id)
+    await deleteConversation(conversation.id)
+    conversations.value = conversations.value.filter((item) => item.id !== conversation.id)
+    if (selectedConversationId.value === conversation.id) {
+      selectedConversation.value = null
+      messages.value = []
+      pendingActions.value = []
+      const nextConversation = conversations.value[Math.min(removedIndex, conversations.value.length - 1)]
+      if (nextConversation) {
+        await selectConversation(nextConversation)
+      }
+    }
+    ElMessage.success('对话已删除')
+  } catch (error) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error(normalizeApiError(error).message)
+    }
+  } finally {
+    deletingConversationId.value = null
+  }
+}
+
+/**
  * 将客户消息发送到 SSE 接口，并实时更新正在生成的 AI 消息。
  */
 async function sendMessage(content: string): Promise<void> {
   const conversationId = selectedConversationId.value
-  if (!conversationId || streaming.value) {
+  if (!conversationId || conversationOperationBusy.value) {
     return
   }
 
@@ -367,9 +405,11 @@ onBeforeUnmount(() => streamController.value?.abort())
         :conversations="conversations"
         :selected-id="selectedConversationId"
         :loading="loadingConversations"
-        :disabled="streaming"
+        :disabled="conversationOperationBusy"
+        :deleting-id="deletingConversationId"
         @select="selectConversation"
         @create="createNewConversation"
+        @delete="removeConversation"
       />
 
       <section class="chat-main">
@@ -392,7 +432,7 @@ onBeforeUnmount(() => streamController.value?.abort())
           />
           <div class="composer-area">
             <ChatComposer
-              :disabled="loadingMessages || streaming"
+              :disabled="loadingMessages || conversationOperationBusy"
               :streaming="streaming"
               @send="sendMessage"
             />

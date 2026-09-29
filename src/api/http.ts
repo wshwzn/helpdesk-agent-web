@@ -62,6 +62,17 @@ export async function requestData<T>(config: AxiosRequestConfig): Promise<T> {
 }
 
 /**
+ * 调用成功时不返回响应体的接口，例如删除操作。
+ */
+export async function requestVoid(config: AxiosRequestConfig): Promise<void> {
+  try {
+    await http.request(config)
+  } catch (error) {
+    throw normalizeApiError(error)
+  }
+}
+
+/**
  * 将 Axios、后端业务异常和浏览器异常转换为统一的前端请求异常。
  */
 export function normalizeApiError(error: unknown): ApiRequestError {
