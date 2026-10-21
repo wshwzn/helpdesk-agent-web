@@ -58,19 +58,19 @@ async function submitRegister(): Promise<void> {
     <section class="auth-hero auth-hero--register">
       <div class="auth-hero__content">
         <BrandMark />
-        <p class="section-kicker section-kicker--light">Get Started</p>
-        <h1>一个入口<br />解决服务问题</h1>
-        <p>从即时问答到人工跟进，所有咨询记录都集中在同一个清晰、可靠的工作空间。</p>
-        <div class="auth-hero__feature"><span>01</span>7×24 小时智能响应</div>
-        <div class="auth-hero__feature"><span>02</span>专属对话历史持续留存</div>
+        <p class="section-kicker section-kicker--light">知序 · KNOWLEDGE WORKSPACE</p>
+        <h1>把工作里的疑问，<br />交给有依据的回答。</h1>
+        <p>从一个具体问题开始。在企业资料中查找规则，查看来源，保留自己的问答记录。</p>
+        <div class="auth-hero__feature"><span>01</span>资料不足时，明确说明边界</div>
+        <div class="auth-hero__feature"><span>02</span>条件不完整时，先向你确认</div>
       </div>
     </section>
 
     <section class="auth-panel">
       <div class="auth-card">
         <p class="section-kicker">创建账号</p>
-        <h2>开始使用客户中心</h2>
-        <p class="auth-card__subtitle">只需一分钟，即可开启智能咨询。</p>
+        <h2>创建你的知识工作区</h2>
+        <p class="auth-card__subtitle">注册员工账号，开始查找工作所需的知识。</p>
 
         <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="submitRegister">
           <el-form-item label="你的称呼" prop="displayName">

@@ -21,7 +21,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const formRef = ref<FormInstance>()
 const submitting = ref(false)
-const form = reactive<LoginRequest>({ username: 'user', password: 'user123' })
+const form = reactive<LoginRequest>({ username: '', password: '' })
 const rules: FormRules<LoginRequest> = {
   username: [{ required: true, message: '请输入登录名', trigger: 'blur' }],
   password: [{ required: true, message: '请输入登录密码', trigger: 'blur' }],
@@ -53,19 +53,19 @@ async function submitLogin(): Promise<void> {
     <section class="auth-hero">
       <div class="auth-hero__content">
         <BrandMark />
-        <p class="section-kicker section-kicker--light">Helpdesk Agent</p>
-        <h1>让每一次咨询<br />都有清晰的答案</h1>
-        <p>AI 即时响应，复杂问题无缝转入人工工单。你的服务进度，始终清楚可见。</p>
-        <div class="auth-hero__feature"><span>01</span>实时对话与上下文理解</div>
-        <div class="auth-hero__feature"><span>02</span>问题记录与工单协同</div>
+        <p class="section-kicker section-kicker--light">知序 · KNOWLEDGE WORKSPACE</p>
+        <h1>每个答案，<br />都应有来处。</h1>
+        <p>让散落在资料里的知识，为你所用。查找制度、比较规则，在原文中找到依据。</p>
+        <div class="auth-hero__feature"><span>01</span>围绕企业资料，回答工作问题</div>
+        <div class="auth-hero__feature"><span>02</span>保留引用与版本，方便回看核对</div>
       </div>
     </section>
 
     <section class="auth-panel">
       <div class="auth-card">
         <p class="section-kicker">欢迎回来</p>
-        <h2>登录客户中心</h2>
-        <p class="auth-card__subtitle">继续你的咨询，查看最新处理进度。</p>
+        <h2>进入知识工作区</h2>
+        <p class="auth-card__subtitle">继续提问，让工作中的疑问有据可循。</p>
 
         <el-form ref="formRef" :model="form" :rules="rules" label-position="top" @submit.prevent="submitLogin">
           <el-form-item label="登录名" prop="username">
@@ -87,7 +87,7 @@ async function submitLogin(): Promise<void> {
           </el-button>
         </el-form>
 
-        <p class="auth-switch">还没有账号？<RouterLink to="/register">免费注册</RouterLink></p>
+        <p class="auth-switch">还没有账号？<RouterLink to="/register">创建账号</RouterLink></p>
       </div>
     </section>
   </main>

@@ -34,6 +34,17 @@ afterEach(() => {
 })
 
 describe('SSE 事件解析', () => {
+  it('多选续答应发送知识模式、原卡片编号和完整范围数组', async () => {
+    writeAuthSession(testSession)
+    const body = 'event: done\ndata: {"type":"done","assistantMessage":null}\n\n'
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(body, { status: 200 })))
+    await streamConversationMessage(1, { content: '选择上海、北京', applicabilityScopes: ['CN_SH', 'CN_BJ'], clarificationMessageId: 42 }, {
+      onStart: vi.fn(), onDelta: vi.fn(), onDone: vi.fn(), onError: vi.fn(),
+    })
+    expect(fetch).toHaveBeenCalledWith('/api/conversations/1/messages/stream', expect.objectContaining({
+      body: JSON.stringify({ content: '选择上海、北京', applicabilityScopes: ['CN_SH', 'CN_BJ'], clarificationMessageId: 42, mode: 'KNOWLEDGE' }),
+    }))
+  })
   it('应解析事件名称并合并多行数据', () => {
     const parsed = parseSseBlock('event: delta\r\ndata: 第一行\r\ndata: 第二行')
 

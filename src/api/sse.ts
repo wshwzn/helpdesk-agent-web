@@ -1,6 +1,6 @@
 import { ApiRequestError, apiBaseUrl } from '@/api/http'
 import type { ApiResponse } from '@/types/api'
-import type { ChatStreamEvent } from '@/types/conversation'
+import type { ChatStreamEvent, SendMessagePayload } from '@/types/conversation'
 import { readAccessToken } from '@/utils/auth-storage'
 
 export interface ParsedSseEvent {
@@ -11,7 +11,7 @@ export interface ParsedSseEvent {
 export interface ChatStreamHandlers {
   onStart: (event: ChatStreamEvent) => void
   onDelta: (event: ChatStreamEvent) => void
-  onActionRequired: (event: ChatStreamEvent) => void
+  onActionRequired?: (event: ChatStreamEvent) => void
   onDone: (event: ChatStreamEvent) => void
   onError: (event: ChatStreamEvent) => void
 }
@@ -48,7 +48,7 @@ export function parseSseBlock(block: string): ParsedSseEvent | null {
  */
 export async function streamConversationMessage(
   conversationId: number,
-  content: string,
+  payload: string | SendMessagePayload,
   handlers: ChatStreamHandlers,
   signal?: AbortSignal,
 ): Promise<void> {
@@ -64,7 +64,7 @@ export async function streamConversationMessage(
       Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ content }),
+    body: JSON.stringify(typeof payload === 'string' ? { content: payload, mode: 'KNOWLEDGE' } : { ...payload, mode: 'KNOWLEDGE' }),
     signal,
   })
 
@@ -126,7 +126,7 @@ function dispatchChatEvent(
     return false
   }
   if (eventName === 'action_required') {
-    handlers.onActionRequired(event)
+    handlers.onActionRequired?.(event)
     return false
   }
   if (eventName === 'done') {

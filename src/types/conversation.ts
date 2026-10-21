@@ -19,6 +19,61 @@ export interface KnowledgeCitation {
   sourceName: string
   chunkSequence: number
   content: string
+  documentId?: number | null
+  metadata?: EvidenceMetadata | null
+}
+
+export interface EvidenceMetadata {
+  sourceKey: string
+  businessVersion: string
+  applicabilityScope: string
+  validFrom: string | null
+  validUntil: string | null
+}
+
+export interface KnowledgeEvidence {
+  id: string
+  documentId: number
+  chunkSequence: number
+  sourceName: string
+  content: string
+  metadata: EvidenceMetadata | null
+}
+
+export interface KnowledgeClaim {
+  text: string
+  references: { evidenceId: string; quote: string }[]
+}
+
+export interface KnowledgeAnswerReport {
+  schemaVersion: number
+  reason: 'REVIEWED' | 'NO_MATCH' | 'NOT_CONFIGURED' | 'APPLICABILITY_REQUIRED'
+  knowledgeBaseId: number | null
+  knowledgeBaseName: string | null
+  checkedAt: string
+  applicabilityScope: string | null
+  applicabilityScopes?: string[]
+  answer: {
+    status: 'ANSWERABLE' | 'NEEDS_CLARIFICATION' | 'INSUFFICIENT_EVIDENCE' | 'CONFLICT'
+    claims: KnowledgeClaim[]
+    missingConditions: string[]
+    conflicts: { first: KnowledgeClaim; second: KnowledgeClaim; [key: string]: unknown }[]
+  }
+  evidence: KnowledgeEvidence[]
+  clarification: {
+    originalQuestion: string
+    policyRevision: number
+    topicIds: string[]
+    scopeOptions: { value: string; label: string }[]
+  } | null
+  continuationOfMessageId: number | null
+}
+
+export interface SendMessagePayload {
+  content: string
+  mode?: 'KNOWLEDGE'
+  applicabilityScopes?: string[]
+  clarificationMessageId?: number
 }
 
 export interface ChatMessage {
@@ -34,6 +89,11 @@ export interface ChatMessage {
   totalTokens: number | null
   errorCode: string | null
   citations: KnowledgeCitation[]
+  mode?: 'KNOWLEDGE' | 'AGENT'
+  applicabilityScope?: string | null
+  applicabilityScopes?: string[]
+  knowledgeAnswer?: KnowledgeAnswerReport | null
+  knowledgeRunId?: string | null
   createdAt: string
   updatedAt: string
 }

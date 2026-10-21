@@ -5,11 +5,11 @@ import type { ChatMessage, Conversation } from '@/types/conversation'
 /**
  * 分页查询当前客户的对话，首页默认加载最近更新的二十条。
  */
-export function listConversations(): Promise<PageResponse<Conversation>> {
+export function listConversations(page = 1): Promise<PageResponse<Conversation>> {
   return requestData<PageResponse<Conversation>>({
     method: 'GET',
     url: '/conversations',
-    params: { page: 1, size: 20, status: 'ACTIVE' },
+    params: { page, size: 20, status: 'ACTIVE' },
   })
 }
 
@@ -37,10 +37,10 @@ export function deleteConversation(conversationId: number): Promise<void> {
 /**
  * 分页查询指定对话的历史消息。
  */
-export function listMessages(conversationId: number): Promise<PageResponse<ChatMessage>> {
+export function listMessages(conversationId: number, page = 1): Promise<PageResponse<ChatMessage>> {
   return requestData<PageResponse<ChatMessage>>({
     method: 'GET',
     url: `/conversations/${conversationId}/messages`,
-    params: { page: 1, size: 100 },
+    params: { page, size: 100 },
   })
 }
